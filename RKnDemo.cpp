@@ -6,6 +6,7 @@
 #include "TStyle.h"
 #include "TGClient.h"
 #include "TF1.h"
+#include "TMath.h"
 #include "TCanvas.h"
 #include <iostream>
 
@@ -53,7 +54,9 @@ double f_vj(double x, const vector<double> &y){  // change in velocity along j a
 double f_stop(double x, const vector<double> &y){
   (void) x;
   
-  if (y[0]>18.5 && (y[2] > 0.85 && y[2] < 0.95)) return 1;  // stop calulation if the current step takes height to negative value
+  if (y[0]>18.5){ 
+    return 1;  // stop calulation if the current step takes height to negative value
+  }
   return 0;  // continue calculation
 }
 
@@ -76,10 +79,10 @@ int main(int argc, char **argv){
   v_fun[2]=f_rj;
   v_fun[3]=f_vj;
   
-  //double v_0 = 53.45;
+  
   double v_0 = 40;
-  for(int i = 0; i<10000; i++){
-  v_0 = v_0 + .01; 
+  for(int i = 0; i<1000; i++){
+  v_0 = v_0 + .1; 
   vector<double> y0(4);
   // initial conditions are starting position, velocity and angle, equivalently ri,rj,vi,vj
   double theta = 3.14159/180;
@@ -88,12 +91,16 @@ int main(int argc, char **argv){
   y0[2]=1.4;   // repeat for j-axis
   y0[3]=v_0*sin(theta);
   
-  auto tgN = RK4SolveN(v_fun, y0, 200, 0, 10, f_stop);
-  cout<<i<<" "<<v_0<<" "<<y0[0]<<" "<<y0[2]<<endl;
+  auto tgN = RK4SolveN(v_fun, y0, 500, 0, 3, f_stop);
+  if(y0[0]>18.45 && (y0[2] > 0.88 && y0[2] < 0.92)) {
+    cout<<"Final Height = "<<y0[2]<<" m \n";
+    cout<<"Time = "<<TMath::MaxElement(tgN[0].GetN(),tgN[0].GetX())<<" s \n";
+    cout<<"Initial Velocity = "<<v_0<<" m/s or "<<v_0*3600/1609.34<<" mph"<<endl;
+    break;
+  }
   //TCanvas *c2 = new TCanvas("c2","ODE solutions 2",dw,dh);
   //tgN[0].Draw("a*");
   //c2->Draw();
-  if(y0[0]>18.5 && y0[2] > 0.85) break;
   }
   
   /*
