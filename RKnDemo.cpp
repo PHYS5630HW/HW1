@@ -20,35 +20,63 @@ using namespace std;
 
 // first we define our vaiables
 // x    = time
-// y[0] = position along i axis   ; f_ri = dri/dt => velocity along i axis  
-// y[1] = velocity along i axis   ; f_vi = dvi/dt => acceleration along i axis
-// y[2] = position along j axis   ; f_rj = drj/dt => velocity along j axis  
-// y[3] = velocity along j axis   ; f_vj = dvj/dt => acceleration along j axis
+// y[0] = position along i axis   ; f_ri = dri/dt => velocity along i axis x 
+// y[1] = velocity along i axis   ; f_vi = dvi/dt => acceleration along i axis x
+// y[2] = position along j axis   ; f_rj = drj/dt => velocity along j axis  y
+// y[3] = velocity along j axis   ; f_vj = dvj/dt => acceleration along j axis y
+// y[4] z
+// y[5] Vz
+
+const double PI = 3.1415926535897;
 
 const double g=9.81;    // [m/s^2]
 const double m=0.145;     // [kg]  n.b. simple projectile motion does not depent on the mass
 const double d = 0.075; //Diameter of ball
 const double b=1.6/10000*d; // constant for air resistance
 const double c=0.25*d*d; // constant for air resistance
+const double B = 4.1*pow(10, -4); //constant B from (3.43) on page 127.
 
+const double fi = 225*PI/180; //angular velocity angle in radian.
+const double w = 1800.0/60; //angular velocity per SECOND.
 
-double f_ri(double x, const vector<double> &y){  // change in position along i axis
+double F_v(double v) { //Calculate F(v) from equation(3.41) shown on page 126. specify for baseball.
+	const double vd = 35.0; //m/s
+	const double delta = 5.0; //m/s
+	return 0.0039+0.0058/(1+exp((v-vd)/delta));
+}
+double vijk (double vi, double vj, double vk) { //overall velocity |v|
+	return sqrt(vi*vi+vj*vj+vk*vk);
+}
+
+double f_ri(double x, const vector<double> &y){  // change in position along x axis
   (void) x;   // prevent unused variable warning
   return y[1];
 }
-double f_vi(double x, const vector<double> &y){  // change in velocity along i axis
+double f_vi(double x, const vector<double> &y){  // change in velocity along x axis
   (void) x;
-  return -(b + c*sqrt(y[1]*y[1] + y[3]*y[3]))*y[1] / m;
+  double vv = vijk(y[1], y[3], y[5]);
+  return -1*(F_v(vv))*vv*y[1]+B*w*(y[5]*sin(fi) - y[3]*cos(fi));
   // return 0;  // if no air, no forces/acceleration along i direction in this problem
 }
-double f_rj(double x, const vector<double> &y){  // change in position along j axis
+double f_rj(double x, const vector<double> &y){  // change in position along y axis
   (void) x;   // prevent unused variable warning
   return y[3];
 }
-double f_vj(double x, const vector<double> &y){  // change in velocity along j axis
+double f_vj(double x, const vector<double> &y){  // change in velocity along y axis
   (void) x;
-  return -(b + c*sqrt(y[1]*y[1] + y[3]*y[3]))*y[3] / m - g;
+  double vv = vijk(y[1], y[3], y[5]);
+  return -1*(F_v(vv))*vv*y[3]+B*w*y[1]*cos(fi);
   // return g;    // if no air constant acceleration along -j direction: F/m = -g
+}
+double f_rk(double x, const vector<double> &y){  // change in position along z axis
+  (void) x;   // prevent unused variable warning
+  return y[5];
+}
+double f_vk(double x, const vector<double> &y){  // change in velocity along z axis
+  (void) x;
+  double vv = vijk(y[1], y[3], y[5]);
+  return -1*(F_v(vv))*vv*y[5]-B*w*y[1]*sin(fi)-g;
+
 }
 
 double f_stop(double x, const vector<double> &y){
@@ -66,54 +94,51 @@ int main(int argc, char **argv){
 
   // ******************************************************************************
   // ** this block is useful for supporting both high and std resolution screens **
-  //UInt_t dh = gClient->GetDisplayHeight()/2;   // fix plot to 1/2 screen height  
+  UInt_t dh = gClient->GetDisplayHeight()/2;   // fix plot to 1/2 screen height  
   //UInt_t dw = gClient->GetDisplayWidth();
-  //UInt_t dw = 1.1*dh;
+  UInt_t dw = 1.1*dh;
   // ******************************************************************************
   
 
   // *** test 2: Use RK4SolveN to calculate simple projectile motion
-  vector<pfunc_t> v_fun(4);   // 4 element vector of function pointers
+  vector<pfunc_t> v_fun(6);   // 6 element vector of function pointers
   v_fun[0]=f_ri;
   v_fun[1]=f_vi;
   v_fun[2]=f_rj;
   v_fun[3]=f_vj;
+  v_fun[4]=f_rk;
+  v_fun[5]=f_vk;
   
   
-  double v_0 = 40;
-  for(int i = 0; i<1000; i++){
-  v_0 = v_0 + .1; 
-  vector<double> y0(4);
-  // initial conditions are starting position, velocity and angle, equivalently ri,rj,vi,vj
-  double theta = 3.14159/180;
+  vector<double> y0(6);
+  
+  const double v_0 = 95.0/2.237; //initial velocity in m/s. 
+  const double theta =1.0*PI/180; //initial velocity angle in radian.
+  const double h = 1*pow(10, -4); //step length. 1/h is the step needed.
+  
   y0[0]=0;   // init position on i-axis
   y0[1]=v_0*cos(theta);  // init velocity along i axis
-  y0[2]=1.4;   // repeat for j-axis
-  y0[3]=v_0*sin(theta);
+  y0[2]=0;   // repeat for j-axis
+  y0[3]=0;
+  y0[4]=0;
+  y0[5]=v_0*sin(theta);
   
-  auto tgN = RK4SolveN(v_fun, y0, 500, 0, 3, f_stop);
-  if(y0[0]>18.45 && (y0[2] > 0.88 && y0[2] < 0.92)) {
-    cout<<"Final Height = "<<y0[2]<<" m \n";
-    cout<<"Time = "<<TMath::MaxElement(tgN[0].GetN(),tgN[0].GetX())<<" s \n";
-    cout<<"Initial Velocity = "<<v_0<<" m/s or "<<v_0*3600/1609.34<<" mph"<<endl;
-    break;
-  }
-  //TCanvas *c2 = new TCanvas("c2","ODE solutions 2",dw,dh);
-  //tgN[0].Draw("a*");
-  //c2->Draw();
-  }
+  auto tgN = RK4SolveN(v_fun, y0, (int)(1.0/h), 0, 30, f_stop);
+
+  TCanvas *c2 = new TCanvas("c2","ODE solutions 2",dw,dh);
+  tgN[2].Draw("a*");
+  c2->Draw();
   
-  /*
+  
   // save our graphs
   TFile *tf=new TFile("RKnDemo.root","recreate");
   for (unsigned i=0; i<v_fun.size(); i++){
     tgN[i].Write();
   }
   tf->Close();
-  */
+  
   
   cout << "Press ^c to exit" << endl;
   theApp.SetIdleTimer(30,".q");  // set up a failsafe timer to end the program  
   theApp.Run();
 }
-

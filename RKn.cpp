@@ -91,11 +91,11 @@ vector<TGraph> RK4SolveN(vector<pfunc_t> &f, vector<double> &y0,
   
   for (int n=0; n<nsteps-1; n++){
     ytmp=RK4StepN(f, y0, x, h);
-    
     if (fstop && fstop(x+h,ytmp)) break;
     // advance to next step and store results in graphs
     y0=ytmp;
     x+=h;
+    //cout<<y0[3]<<endl;
     for (int i=0; i<nFcn; i++) tg[i].SetPoint(n+1,x,y0[i]);
     }
   
