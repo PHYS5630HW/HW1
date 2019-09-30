@@ -29,14 +29,14 @@ using namespace std;
 
 const double PI = 3.1415926535897;
 
-const double g=9.81*3.2808;    // [m/s^2]
+const double g=9.81*3.2808;    // [feet/s^2]
 const double m=0.145;     // [kg]  n.b. simple projectile motion does not depent on the mass
 const double d = 0.075; //Diameter of ball
 const double b=1.6/10000*d; // constant for air resistance
 const double c=0.25*d*d; // constant for air resistance
 const double B = 4.1*pow(10, -4); //constant B from (3.43) on page 127.
 
-const TString name = "Fastball";   //What type of throw
+const TString name = "Curveball";   //What type of throw
 double fi = 0;
 //const double w = 1800.0/60; //angular velocity per SECOND.
 const double w = 10000.0/60; //angular velocity per SECOND.
@@ -44,9 +44,9 @@ const double w = 10000.0/60; //angular velocity per SECOND.
 
 double F_v(double v) { //Calculate F(v) from equation(3.41) shown on page 126. specify for baseball.
   //const double vd = 35.0; //m/s
-  const double vd = 35.0*3.2808; //m/s
+  const double vd = 35.0*3.2808; //feet/s
   //const double delta = 5.0; //m/s
-  const double delta = 5.0*3.2808; //m/s
+  const double delta = 5.0*3.2808; //feet/s
   return 0.0039+0.0058/(1+exp((v-vd)/delta));
 }
 double vijk (double vi, double vj, double vk) { //overall velocity |v|
@@ -122,8 +122,8 @@ int main(int argc, char **argv){
   if(name == "Screwball") fi = 135*PI/180; //angular velocity angle in radian.
   if(name == "Fastball") fi = 225*PI/180; //angular velocity angle in radian.
   
-  double v_0 = 85.0*1.46667; //initial velocity in m/s. 
-  if(name =="Fastball") v_0 = 95.0*1.46667; //initial velocity in m/s. 
+  double v_0 = 85.0*1.46667; //initial velocity in feet/s. 
+  if(name =="Fastball") v_0 = 95.0*1.46667; //initial velocity in feet/s. 
   const double theta =1.0*PI/180; //initial velocity angle in radian.
   const double h = 1*pow(10, -4); //step length. 1/h is the step needed.
   
@@ -150,6 +150,6 @@ int main(int argc, char **argv){
   
   
   cout << "Press ^c to exit" << endl;
-  theApp.SetIdleTimer(30,".q");  // set up a failsafe timer to end the program  
+  theApp.SetIdleTimer(1,".q");  // set up a failsafe timer to end the program  
   theApp.Run();
 }

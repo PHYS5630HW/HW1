@@ -6,7 +6,7 @@ from math import sqrt
 
 # graphs are stored with generic names
 # each of our 'n' dependent vars are plotted vs the independent variable (t)
-name = "Fastball"
+name = "Curveball"
 tf=r.TFile(name+".root") # open file for read access
 
 tg_x_vs_t=tf.Get("xy0")   # dependent var[0] vs independent var
